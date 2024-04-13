@@ -1,5 +1,6 @@
-import { CacheInterceptor } from '@nestjs/cache-manager';
-import { Controller, Get, UseInterceptors } from '@nestjs/common';
+import { CacheInterceptor, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Controller, Get, Inject, UseInterceptors } from '@nestjs/common';
+import { Cache } from 'cache-manager';
 
 function generateRandomName() {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz';
@@ -18,7 +19,10 @@ function generateRandomEmail(name) {
 
 @Controller('user')
 export class UserController {
-  constructor() {}
+  constructor(
+    @Inject(CACHE_MANAGER)
+    private cacheManager: Cache,
+  ) {}
 
   @UseInterceptors(CacheInterceptor) // 이거 추가
   @Get()
@@ -34,6 +38,34 @@ export class UserController {
     return new Promise((resolve, _) => {
       setTimeout(() => {
         resolve(data);
+      }, 2000);
+    });
+  }
+
+  @Get('/man')
+  async getMans() {
+    const cachedData = await this.cacheManager.get('man');
+    if (cachedData)
+      return {
+        currentTime: new Date().toString(),
+        data: cachedData,
+      };
+    const data = [];
+
+    for (let i = 0; i <= 100; i++) {
+      const name = generateRandomName();
+      const email = generateRandomEmail(name);
+      data.push({ id: i, email, name });
+    }
+
+    this.cacheManager.set('man', data);
+
+    return new Promise((resolve, _) => {
+      setTimeout(() => {
+        resolve({
+          currentTime: new Date().toString(),
+          data,
+        });
       }, 2000);
     });
   }
