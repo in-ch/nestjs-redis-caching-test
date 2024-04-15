@@ -1,4 +1,9 @@
-import { CacheInterceptor, CACHE_MANAGER } from '@nestjs/cache-manager';
+import {
+  CacheInterceptor,
+  CacheKey,
+  CacheTTL,
+  CACHE_MANAGER,
+} from '@nestjs/cache-manager';
 import { Controller, Get, Inject, UseInterceptors } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 
@@ -25,6 +30,8 @@ export class UserController {
   ) {}
 
   @UseInterceptors(CacheInterceptor) // 이거 추가
+  @CacheTTL(10000)
+  @CacheKey('user')
   @Get()
   getUser() {
     const data = [];
@@ -48,7 +55,6 @@ export class UserController {
     if (cachedData)
       return {
         currentTime: new Date().toString(),
-        data: cachedData,
       };
     const data = [];
 
